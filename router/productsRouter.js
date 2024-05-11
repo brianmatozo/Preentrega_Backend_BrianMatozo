@@ -3,38 +3,22 @@ const router = express.Router();
 const fs = require('fs');
 
 
-// Function to generate a unique product ID
-// let lastProductId = 0;
-// let availableProductIds = [];
-
-// function generateProductId() {
-//     if (availableProductIds.length > 0) {
-//         // Reuse the smallest available product ID
-//         return availableProductIds.shift();
-//     } else {
-//         // Generate a new product ID
-//         lastProductId++;
-//         return lastProductId;
-//     }
-// }
-
-
 // Listar todos los productos
 router.get('/', (req, res) => {
     try {
-        // Leer el contenido del archivo productos.json
+        // Leer el contenido productos.json
         const data = fs.readFileSync('./data/products.json', 'utf-8');
         
-        // Log the content of the file for debugging
-        // console.log("Contenido de products.json:", data);
+        // debug
+        // console.log("products.json:", data);
 
-        // Convertir el contenido a un objeto JSON
+        // parsear
         const products = JSON.parse(data);
         
-        // Enviar la lista de productos como respuesta
+        // respuesta de lista
         res.json(products);
     } catch (error) {
-        // En caso de error, enviar un mensaje de error al cliente
+        // error:
         console.error("Error al leer productos:", error);
         res.status(500).json({ error: "Error al leer productos" });
     }
@@ -43,26 +27,25 @@ router.get('/', (req, res) => {
 // Traer un producto por su id
 router.get('/:pid', (req, res) => {
     try {
-        // Obtener el id del producto de los parámetros de la solicitud
+        // Obtener el id del producto (:pid)
         const productId = req.params.pid;
 
-        // Leer el contenido del archivo productos.json
         const data = fs.readFileSync('./data/products.json', 'utf-8');
         const products = JSON.parse(data);
 
         // Buscar el producto por su id
         const product = products.find(p => p.id === parseInt(productId));
 
-        // Verificar si se encontró el producto
+        // si o no?
         if (product) {
-            // Devolver el producto encontrado
+            // respuesta de producto
             res.json(product);
         } else {
-            // Si el producto no se encuentra, responder con un código de estado 404
+            // => error
             res.status(404).json({ error: "Producto no encontrado" });
         }
     } catch (error) {
-        // En caso de error, enviar un mensaje de error al cliente
+        // error cliente
         console.error("Error al leer productos:", error);
         res.status(500).json({ error: "Error al leer productos" });
     }
@@ -71,27 +54,26 @@ router.get('/:pid', (req, res) => {
 // Agregar un nuevo producto
 productsRouter.post('/', (req, res) => {
     try {
-        // Obtener los datos del nuevo producto del cuerpo de la solicitud
+        // datos obligatorios
         const { title, description, code, price, stock, category, thumbnails } = req.body;
 
-        // Validar que todos los campos obligatorios estén presentes
+        // super chequeo de datos
         if (!title || !description || !code || !price || !stock || !category) {
             return res.status(400).json({ error: "Todos los campos son obligatorios excepto thumbnails" });
         }
 
-        // Leer el contenido del archivo productos.json para obtener la lista actual de productos
         const data = fs.readFileSync('./data/products.json', 'utf-8');
         const products = JSON.parse(data);
         
-        // Asignar un ID único al nuevo producto
+        // ID unico al nuevo Producto
         const lastProductId = products.length > 0 ? products[products.length - 1].id : 0;
         const newProductId = lastProductId + 1;
 
-        // Asignar valores predeterminados a los campos opcionales que no se proporcionaron en la solicitud
-        const status = true; // Status es true por defecto
+        // valores predeterminados
+        const status = true;
         const thumbnailsArray = thumbnails || []; // thumbnails es un array opcional
         
-        // Crear el nuevo producto con los datos proporcionados
+        // Crear el nuevo producto
         const newProduct = {
             id: newProductId,
             title,
@@ -104,16 +86,16 @@ productsRouter.post('/', (req, res) => {
             thumbnails: thumbnailsArray
         };
 
-        // Agregar el nuevo producto a la lista de productos
+        // agregar a la lista
         products.push(newProduct);
 
-        // Escribir la lista actualizada de productos de vuelta al archivo productos.json
+        // Escribir la lista actualizada
         fs.writeFileSync('./data/products.json', JSON.stringify(products, null, 2), 'utf-8');
 
-        // Responder con el nuevo producto agregado
+        // repuesta nuevo producto
         res.status(201).json(newProduct);
     } catch (error) {
-        // En caso de error, enviar un mensaje de error al cliente
+        // error 500 cliente
         console.error("Error al agregar nuevo producto:", error);
         res.status(500).json({ error: "Error al agregar nuevo producto" });
     }
@@ -122,22 +104,20 @@ productsRouter.post('/', (req, res) => {
 // Actualizar un producto por su id
 router.put('/:pid', (req, res) => {
     try {
-        // Extract the product ID from the request parameters
         const productId = parseInt(req.params.pid);
 
-        // Extract the updated product data from the request body
+        // extraer los datos
         const { title, description, code, price, stock, category, thumbnails } = req.body;
 
-        // Read the existing products data from the JSON file
         const data = fs.readFileSync('./data/products.json', 'utf-8');
         let products = JSON.parse(data);
 
-        // Find the index of the product with the given ID in the products array
+        // matchear los indices con el :PID
         const index = products.findIndex(product => product.id === productId);
 
-        // Check if the product exists
+        // existe?
         if (index !== -1) {
-            // Update the product fields with the provided data
+            // actualizar producto
             products[index] = {
                 ...products[index],
                 title,
@@ -149,17 +129,17 @@ router.put('/:pid', (req, res) => {
                 thumbnails
             };
 
-            // Write the updated products array back to the JSON file
+            //escribir
             fs.writeFileSync('./data/products.json', JSON.stringify(products, null, 2), 'utf-8');
 
-            // Respond with the updated product
+            //repuesta
             res.json(products[index]);
         } else {
-            // If the product does not exist, respond with a 404 status
+            // error no existe
             res.status(404).json({ error: "Producto no encontrado" });
         }
     } catch (error) {
-        // If an error occurs, respond with a 500 status
+        // error 500 server
         console.error("Error al actualizar el producto:", error);
         res.status(500).json({ error: "Error al actualizar el producto" });
     }
@@ -168,37 +148,24 @@ router.put('/:pid', (req, res) => {
 // Eliminar un producto por su id
 router.delete('/:pid', (req, res) => {
     try {
-        // Extract the product ID from the request parameters
         const productId = parseInt(req.params.pid);
 
-        // const productIdToDelete = parseInt(req.params.pid);
-        
-        // Add the deleted product ID to the list of available IDs
-        // availableProductIds.push(productIdToDelete);
-
-        // Read the existing products data from the JSON file
         const data = fs.readFileSync('./data/products.json', 'utf-8');
         let products = JSON.parse(data);
 
-        // Find the index of the product with the given ID in the products array
         const index = products.findIndex(product => product.id === productId);
 
-        // Check if the product exists
         if (index !== -1) {
-            // Remove the product from the array of products
+            // eliminar
             products.splice(index, 1);
 
-            // Write the updated products array back to the JSON file
             fs.writeFileSync('./data/products.json', JSON.stringify(products, null, 2), 'utf-8');
 
-            // Respond with a success message
             res.json({ message: "Producto eliminado exitosamente" });
         } else {
-            // If the product does not exist, respond with a 404 status
             res.status(404).json({ error: "Producto no encontrado" });
         }
     } catch (error) {
-        // If an error occurs, respond with a 500 status
         console.error("Error al eliminar el producto:", error);
         res.status(500).json({ error: "Error al eliminar el producto" });
     }

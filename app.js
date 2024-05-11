@@ -10,11 +10,11 @@ const PORT = 8080;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Montar los routers en las rutas especificadas
+// routers
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
 
-// Iniciar el servidor
+// server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
