@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const fs = require('fs');
+const path = require('path');
+const productsFilePath = path.join(__dirname, '../data/products.json');
 
 function generateProductId(products) {
     // Si no hay ningún carrito en la lista, comienza con el ID 1
@@ -27,11 +29,11 @@ function generateProductId(products) {
 router.get('/', (req, res) => {
     try {
         // Leer el contenido productos.json
-        const data = fs.readFileSync('./data/products.json', 'utf-8');
+        const data = fs.readFileSync(productsFilePath, 'utf-8');
 
         // parsear
         const products = JSON.parse(data);
-        
+
         // respuesta de lista
         res.json(products);
     } catch (error) {
@@ -47,7 +49,7 @@ router.get('/:pid', (req, res) => {
         // Obtener el id del producto (:pid)
         const productId = req.params.pid;
 
-        const data = fs.readFileSync('./data/products.json', 'utf-8');
+        const data = fs.readFileSync(productsFilePath, 'utf-8');
         const products = JSON.parse(data);
 
         // Buscar el producto por su id
@@ -79,7 +81,7 @@ router.post('/', (req, res) => {
             return res.status(400).json({ error: "Todos los campos son obligatorios excepto thumbnails" });
         }
 
-        const data = fs.readFileSync('./data/products.json', 'utf-8');
+        const data = fs.readFileSync(productsFilePath, 'utf-8');
         const products = JSON.parse(data);
 
         // logica de nuevo id
@@ -106,7 +108,7 @@ router.post('/', (req, res) => {
         products.push(newProduct);
 
         // Escribir la lista actualizada
-        fs.writeFileSync('./data/products.json', JSON.stringify(products, null, 2), 'utf-8');
+        fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2), 'utf-8');
 
         // repuesta nuevo producto
         res.status(201).json(newProduct);
@@ -125,7 +127,7 @@ router.put('/:pid', (req, res) => {
         // extraer los datos
         const { title, description, code, price, stock, category, thumbnails } = req.body;
 
-        const data = fs.readFileSync('./data/products.json', 'utf-8');
+        const data = fs.readFileSync(productsFilePath, 'utf-8');
         let products = JSON.parse(data);
 
         // matchear los indices con el :PID
@@ -146,7 +148,7 @@ router.put('/:pid', (req, res) => {
             };
 
             //escribir
-            fs.writeFileSync('./data/products.json', JSON.stringify(products, null, 2), 'utf-8');
+            fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2), 'utf-8');
 
             //repuesta
             res.json(products[index]);
@@ -166,7 +168,7 @@ router.delete('/:pid', (req, res) => {
     try {
         const productId = parseInt(req.params.pid);
 
-        const data = fs.readFileSync('./data/products.json', 'utf-8');
+        const data = fs.readFileSync(productsFilePath, 'utf-8');
         let products = JSON.parse(data);
 
         const index = products.findIndex(product => product.id === productId);
@@ -175,7 +177,7 @@ router.delete('/:pid', (req, res) => {
             // eliminar
             products.splice(index, 1);
 
-            fs.writeFileSync('./data/products.json', JSON.stringify(products, null, 2), 'utf-8');
+            fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2), 'utf-8');
 
             res.json({ message: "Producto eliminado exitosamente" });
         } else {

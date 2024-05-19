@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const path = require('path');
+const cartsFilePath = path.join(__dirname, '../data/carts.json');
 
 function generateCartId(carts) {
     // Si no hay ningún carrito en la lista, comienza con el ID 1
@@ -28,7 +30,7 @@ function generateCartId(carts) {
 // Crear un nuevo carrito
 router.post('/', (req, res) => {
     try {
-        const data = fs.readFileSync('./data/carts.json', 'utf-8');
+        const data = fs.readFileSync(cartsFilePath, 'utf-8');
         const carts = JSON.parse(data);
 
         // logica de nuevo id
@@ -44,7 +46,7 @@ router.post('/', (req, res) => {
         carts.push(newCart);
 
         // escribir la lista
-        fs.writeFileSync('./data/carts.json', JSON.stringify(carts, null, 2), 'utf-8');
+        fs.writeFileSync(cartsFilePath, JSON.stringify(carts, null, 2), 'utf-8');
 
         // respuesta ok
         res.status(201).json(newCart);
@@ -59,7 +61,7 @@ router.post('/', (req, res) => {
 router.get('/:cid', (req, res) => {
     try {
         const cartId = parseInt(req.params.cid);
-        const data = fs.readFileSync('./data/carts.json', 'utf-8');
+        const data = fs.readFileSync(cartsFilePath, 'utf-8');
         const carts = JSON.parse(data);
 
         const cart = carts.find(cart => cart.id === cartId);
@@ -84,7 +86,7 @@ router.post('/:cid/product/:pid', (req, res) => {
         const cartId = parseInt(req.params.cid);
         const productId = parseInt(req.params.pid);
 
-        const data = fs.readFileSync('./data/carts.json', 'utf-8');
+        const data = fs.readFileSync(cartsFilePath, 'utf-8');
         let carts = JSON.parse(data);
         const cartIndex = carts.findIndex(cart => cart.id === cartId);
 
@@ -102,7 +104,7 @@ router.post('/:cid/product/:pid', (req, res) => {
                 cart.products.push({ id: productId, quantity: 1 });
             }
 
-            fs.writeFileSync('./data/carts.json', JSON.stringify(carts, null, 2), 'utf-8');
+            fs.writeFileSync(cartsFilePath, JSON.stringify(carts, null, 2), 'utf-8');
             res.json(cart);
         } else {
             res.status(404).json({ error: "Carrito no encontrado" });
@@ -119,7 +121,7 @@ router.delete('/:cid', (req, res) => {
     try {
         const cartId = parseInt(req.params.cid);
 
-        const data = fs.readFileSync('./data/carts.json', 'utf-8');
+        const data = fs.readFileSync(cartsFilePath, 'utf-8');
         let carts = JSON.parse(data);
 
         const index = carts.findIndex(cart => cart.id === cartId);
@@ -128,7 +130,7 @@ router.delete('/:cid', (req, res) => {
             // eliminar
             carts.splice(index, 1);
 
-            fs.writeFileSync('./data/carts.json', JSON.stringify(carts, null, 2), 'utf-8');
+            fs.writeFileSync(cartsFilePath, JSON.stringify(carts, null, 2), 'utf-8');
 
             res.json({ message: "Carrito eliminado exitosamente" });
         } else {
@@ -143,7 +145,7 @@ router.delete('/:cid', (req, res) => {
 // Listar todos los carritos
 router.get('/', (req, res) => {
     try {
-        const data = fs.readFileSync('./data/carts.json', 'utf-8');
+        const data = fs.readFileSync(cartsFilePath, 'utf-8');
 
         const carts = JSON.parse(data);
         

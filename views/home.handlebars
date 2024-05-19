@@ -1,0 +1,27 @@
+{{#extend "layouts/main"}}
+{{#content "content"}}
+    <header class="container mt-4">
+        <div class="text-center">
+            <h1>Welcome to [Your E-commerce Store Name]</h1>
+            <img src="{{imagePath}}" alt="Your E-commerce Store Logo" class="img-fluid mt-3">
+        </div>
+    </header>
+    <!-- Other content here -->
+{{/content}}
+{{/extend}}
+
+
+<div class="container mt-5 d-flex flex-wrap justify-content-center">
+    {{#each products}}
+    <div class="card m-2" style="width: 18rem;">
+        <img src="{{this.thumbnails.[0]}}" class="card-img-top" alt="{{this.title}}">
+        <div class="card-body">
+            <h5 class="card-title">{{this.title}}</h5>
+            <p class="card-text">{{this.description}}</p>
+            <p class="card-text"><strong>Price:</strong> ${{this.price}}</p>
+            <p class="card-text"><strong>Category:</strong> {{this.category}}</p>
+            <a href="#" class="btn btn-primary">Go somewhere</a>
+        </div>
+    </div>
+    {{/each}}
+</div>
