@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const productsRouter = require('./router/productsRouter');
-const cartsRouter = require('./router/cartsRouter');
+const productsRouter = require('./src/router/productsRouter');
+const cartsRouter = require('./src/router/cartsRouter');
 
 const app = express();
 const PORT = 8080;
