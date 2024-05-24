@@ -1,3 +1,4 @@
+const http = require('http')
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
@@ -6,12 +7,11 @@ const path = require('path');
 const productsRouter = require('./src/router/productsRouter');
 const cartsRouter = require('./src/router/cartsRouter');
 const productsFilePath = path.join(__dirname, './src/data/products.json');
-const handlebarsLayouts = require('handlebars-layouts');
-handlebarsLayouts.register(engine.handlebars);
-
-
 const app = express();
 const PORT = 8080;
+const socketIo = require('socket.io');
+const server = http.createServer(app);
+const io = socketIo(server);
 
 // Set up Handlebars
 app.engine('handlebars', engine({ 
@@ -21,6 +21,7 @@ app.engine('handlebars', engine({
 }));
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'views'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware para el manejo de datos del formulario
 app.use(bodyParser.json());
@@ -41,7 +42,6 @@ app.get('/', (req, res) => {
         // Render
         res.render('home', { 
             products: products,
-            imagePath: 'images/basket.png'
         });
     } catch (error) {
         console.error("Error reading products.json file:", error);
