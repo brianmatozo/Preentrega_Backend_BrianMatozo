@@ -4,7 +4,11 @@
   "description": "hola",
   "main": "a.js",
   "scripts": {
+    "start": "node app.js",
     "test": "node app.js"
+  },
+  "engines": {
+    "node": "14.x"
   },
   "author": "brian",
   "license": "ISC",
