@@ -48,20 +48,6 @@ app.get('/', (req, res) => {
     }
 });
 
-// Socket.io setup
-// io.on('connection', (socket) => {
-//     console.log('Usuario conectado');
-//     socket.on('disconnect', () => {
-//         console.log('Usuario desconectado');
-//     });
-
-//     // Custom event handlers can be added here
-//     socket.on('message', (msg) => {
-//         console.log('mensaje: ', msg);
-//         io.emit('message', msg); // Broadcast to all clients
-//     });
-// });
-
 // server
 server.listen(PORT, () => {
     console.log(`server en http://localhost:${PORT}`);
