@@ -54,5 +54,19 @@
       "https://example.com/image1.jpg",
       "https://example.com/image2.jpg"
     ]
+  },
+  {
+    "id": 5,
+    "title": "New Product",
+    "description": "This is a new product",
+    "code": "NEW123",
+    "price": 99.99,
+    "status": true,
+    "stock": 100,
+    "category": "Electronics",
+    "thumbnails": [
+      "https://example.com/image1.jpg",
+      "https://example.com/image2.jpg"
+    ]
   }
 ]
