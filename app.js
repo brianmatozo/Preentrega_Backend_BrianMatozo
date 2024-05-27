@@ -23,7 +23,6 @@ app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Middleware para el manejo de datos del formulario
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -49,7 +48,21 @@ app.get('/', (req, res) => {
     }
 });
 
+// Socket.io setup
+io.on('connection', (socket) => {
+    console.log('A user connected');
+    socket.on('disconnect', () => {
+        console.log('User disconnected');
+    });
+
+    // Custom event handlers can be added here
+    socket.on('message', (msg) => {
+        console.log('Message received: ', msg);
+        io.emit('message', msg); // Broadcast to all clients
+    });
+});
+
 // server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
