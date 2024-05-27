@@ -2,7 +2,7 @@ const http = require('http')
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
-const { engine } = require('express-handlebars'); 
+const exphbs = require('express-handlebars'); 
 const path = require('path');
 const productsRouter = require('./src/router/productsRouter');
 const cartsRouter = require('./src/router/cartsRouter');
@@ -14,7 +14,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 
 // Set up Handlebars
-app.engine('handlebars', engine({ 
+app.engine('handlebars', exphbs({ 
     defaultLayout: 'main',
     layoutsDir: path.join(__dirname, 'views/layouts'),
     partialsDir: path.join(__dirname, 'views', 'partials')

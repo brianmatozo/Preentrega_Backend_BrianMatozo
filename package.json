@@ -8,7 +8,8 @@
     "test": "node app.js"
   },
   "engines": {
-    "node": "14.x"
+    "node": "21.x",
+    "npm": "10.x"
   },
   "author": "brian",
   "license": "ISC",
