@@ -68,5 +68,63 @@
       "https://example.com/image1.jpg",
       "https://example.com/image2.jpg"
     ]
+  },
+  {
+    "id": 6,
+    "title": "New Product",
+    "description": "This is a new product",
+    "code": "NEW123",
+    "price": 99.99,
+    "status": true,
+    "stock": 100,
+    "category": "Electronics",
+    "thumbnails": [
+      "https://example.com/image1.jpg",
+      "https://example.com/image2.jpg"
+    ]
+  },
+  {
+    "id": 7,
+    "title": "pan",
+    "description": "megustaelpan",
+    "code": "123",
+    "price": "2222",
+    "status": true,
+    "stock": "321",
+    "category": "pan",
+    "thumbnails": []
+  },
+  {
+    "id": 8,
+    "title": "pan",
+    "description": "megustaelpan",
+    "code": "123",
+    "price": "2222",
+    "status": true,
+    "stock": "321",
+    "category": "pan",
+    "thumbnails": []
+  },
+  {
+    "id": 9,
+    "title": "pan",
+    "description": "megustaelpan",
+    "code": "123",
+    "price": "2222",
+    "status": true,
+    "stock": "321",
+    "category": "pan",
+    "thumbnails": []
+  },
+  {
+    "id": 10,
+    "title": "pan",
+    "description": "megustaelpan",
+    "code": "123",
+    "price": "2222",
+    "status": true,
+    "stock": "321",
+    "category": "pan",
+    "thumbnails": []
   }
 ]

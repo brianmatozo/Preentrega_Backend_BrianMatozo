@@ -13,7 +13,7 @@ const socketIo = require('socket.io');
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// Set up Handlebars
+// handlebars setup
 app.engine('handlebars', exphbs({ 
     defaultLayout: 'main',
     layoutsDir: path.join(__dirname, 'views/layouts'),
@@ -21,6 +21,7 @@ app.engine('handlebars', exphbs({
 }));
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'views'));
+//public setup
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(bodyParser.json());
@@ -30,23 +31,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
 
-// Routes
-app.get('/', (req, res) => {
-    try {
-        const data = fs.readFileSync(productsFilePath, 'utf-8');
-
-        // Parsear
-        const products = JSON.parse(data);
-
-        // Render
-        res.render('home', { 
-            products: products,
-        });
-    } catch (error) {
-        console.error("Error reading products.json file:", error);
-        res.status(500).json({ error: "Error reading products" });
-    }
-});
+const viewsRouter = require('./src/router/viewsRouter')(io);
+app.use('/', viewsRouter);
 
 // server
 server.listen(PORT, () => {

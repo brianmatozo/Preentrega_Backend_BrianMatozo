@@ -1,3 +1,59 @@
+<div class="container mt-5">
+    <h2>Productos en Tiempo Real</h2>
+
+    <form id="create-product-form" class="mb-4">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="title">Título del Producto</label>
+                    <input type="text" class="form-control" name="title" placeholder="Título del Producto" required>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="description">Descripción del Producto</label>
+                    <input type="text" class="form-control" name="description" placeholder="Descripción del Producto" required>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="code">Código del Producto</label>
+                    <input type="number" class="form-control" name="code" placeholder="Código del Producto" required>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="price">Precio del Producto</label>
+                    <input type="number" class="form-control" name="price" placeholder="Precio del Producto" required>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="stock">Stock del Producto</label>
+                    <input type="number" class="form-control" name="stock" placeholder="Stock del Producto" required>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="category">Categoría del Producto</label>
+                    <input type="text" class="form-control" name="category" placeholder="Categoría del Producto" required>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="category">Thumbnails del Producto</label>
+                    <input type="text" class="form-control" name="Thumbnails" placeholder="Thumbnails del Producto" required>
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Crear Producto</button>
+    </form>
+
+    <ul id="product-list" class="list-group">
+        <!-- This section will be populated by client-side JavaScript -->
+    </ul>   
+</div>
+
 <div class="container mt-5 d-flex flex-wrap justify-content-center">
     {{#each products}}
     <div class="card m-2" style="width: 18rem;">
