@@ -33,14 +33,14 @@ router.get('/', (req, res) => {
         const products = JSON.parse(data);
         res.render('home', { title: 'Home', products });
     } catch (error) {
-        console.error("Error reading products.json file:", error);
-        res.status(500).send("Internal Server Error");
+        console.error("error al leer el archivo json:", error);
+        res.status(500).send("error de carga de servidor");
     }
 });
 
 module.exports = (io) => {
     io.on('connection', (socket) => {
-        console.log('A user connected');
+        // console.log('A user connected');
 
         // Emitir la lista de productos al cliente cuando se conecta
         try {
@@ -48,24 +48,27 @@ module.exports = (io) => {
             const products = JSON.parse(data);
             socket.emit('products', products);
         } catch (error) {
-            console.error("Error reading products.json file:", error);
+            console.error("error al leer el archivo json:", error);
         }
+
+        // Manejar la eliminación de un producto
+        socket.on('deleteProduct', (productId) => {
+            // Lógica para eliminar el producto de la base de datos o el archivo JSON
+            // Después de eliminar el producto, emitir un evento 'productDeleted' con el ID del producto eliminado a todos los clientes
+            io.emit('productDeleted', productId);
+        });
 
         // Manejar la creación de un nuevo producto
         socket.on('createProduct', (newProduct) => {
             try {
                 const { title, description, code, price, stock, category, thumbnails } = newProduct;
-
                 const data = fs.readFileSync(productsFilePath, 'utf-8');
                 const products = JSON.parse(data);
-
                 // logica de nuevo id
                 const newProductId = generateProductId(products);
-
                 // valores predeterminados
                 const status = true;
                 const thumbnailsArray = thumbnails || []; // thumbnails es un array opcional
-                
                 // Crear el nuevo producto
                 const productToAdd = {
                     id: newProductId,
@@ -78,22 +81,19 @@ module.exports = (io) => {
                     category,
                     thumbnails: thumbnailsArray
                 };
-
                 // agregar a la lista
                 products.push(productToAdd);
-
                 // Escribir la lista actualizada
                 fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2), 'utf-8');
-
                 // repuesta nuevo producto
                 io.emit('productCreated', productToAdd);
             } catch (error) {
-                console.error("Error handling createProduct event:", error);
+                console.error("error al manejar el evento createProduct:", error);
             }
         });
 
         socket.on('disconnect', () => {
-            console.log('A user disconnected');
+            // console.log('A user disconnected');
         });
     });
     return router;
