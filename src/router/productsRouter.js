@@ -4,16 +4,34 @@ const fs = require('fs');
 const path = require('path');
 const productsFilePath = path.join(__dirname, '../data/products.json');
 
+// function generateProductId(products) {
+//     // Si no hay ningún carrito en la lista, comienza con el ID 1
+//     if (products.length === 0) {
+//         return 1;
+//     }
+
+//     // Encontrar el mayor ID de carrito actual
+//     const maxId = products.reduce((max, products) => (products.id > max ? products.id : max), 0);
+
+//     // Verificar si hay algún ID disponible de menor orden
+//     for (let i = 1; i <= maxId; i++) {
+//         const idExists = products.some(product => product.id === i);
+//         if (!idExists) {
+//             return i;
+//         }
+//     }
+
+//     // Si no se encuentra ningún ID disponible de menor orden, se genera un nuevo ID
+//     return maxId + 1;
+// }
+
 function generateProductId(products) {
-    // Si no hay ningún carrito en la lista, comienza con el ID 1
     if (products.length === 0) {
         return 1;
     }
 
-    // Encontrar el mayor ID de carrito actual
-    const maxId = products.reduce((max, products) => (products.id > max ? products.id : max), 0);
+    const maxId = products.reduce((max, product) => (product.id > max ? product.id : max), 0);
 
-    // Verificar si hay algún ID disponible de menor orden
     for (let i = 1; i <= maxId; i++) {
         const idExists = products.some(product => product.id === i);
         if (!idExists) {
@@ -21,9 +39,10 @@ function generateProductId(products) {
         }
     }
 
-    // Si no se encuentra ningún ID disponible de menor orden, se genera un nuevo ID
     return maxId + 1;
 }
+
+module.exports = (io) => {
 
 // Listar todos los productos
 router.get('/', (req, res) => {
@@ -110,6 +129,7 @@ router.post('/', (req, res) => {
         // Escribir la lista actualizada
         fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2), 'utf-8');
 
+        io.emit('productCreated', newProduct);
         // repuesta nuevo producto
         res.status(201).json(newProduct);
     } catch (error) {
@@ -179,6 +199,7 @@ router.delete('/:pid', (req, res) => {
 
             fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2), 'utf-8');
 
+            io.emit('productDeleted', productId);
             res.json({ message: "Producto eliminado exitosamente" });
         } else {
             res.status(404).json({ error: "Producto no encontrado" });
@@ -188,5 +209,7 @@ router.delete('/:pid', (req, res) => {
         res.status(500).json({ error: "Error al eliminar el producto" });
     }
 });
+return router;
+};
 
-module.exports = router;
+// module.exports = router;

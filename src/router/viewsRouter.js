@@ -5,16 +5,34 @@ const path = require('path');
 
 const productsFilePath = path.join(__dirname, '../data/products.json');
 
+// function generateProductId(products) {
+//     // Si no hay ningún carrito en la lista, comienza con el ID 1
+//     if (products.length === 0) {
+//         return 1;
+//     }
+
+//     // Encontrar el mayor ID de carrito actual
+//     const maxId = products.reduce((max, products) => (products.id > max ? products.id : max), 0);
+
+//     // Verificar si hay algún ID disponible de menor orden
+//     for (let i = 1; i <= maxId; i++) {
+//         const idExists = products.some(product => product.id === i);
+//         if (!idExists) {
+//             return i;
+//         }
+//     }
+
+//     // Si no se encuentra ningún ID disponible de menor orden, se genera un nuevo ID
+//     return maxId + 1;
+// }
+
 function generateProductId(products) {
-    // Si no hay ningún carrito en la lista, comienza con el ID 1
     if (products.length === 0) {
         return 1;
     }
 
-    // Encontrar el mayor ID de carrito actual
-    const maxId = products.reduce((max, products) => (products.id > max ? products.id : max), 0);
+    const maxId = products.reduce((max, product) => (product.id > max ? product.id : max), 0);
 
-    // Verificar si hay algún ID disponible de menor orden
     for (let i = 1; i <= maxId; i++) {
         const idExists = products.some(product => product.id === i);
         if (!idExists) {
@@ -22,11 +40,11 @@ function generateProductId(products) {
         }
     }
 
-    // Si no se encuentra ningún ID disponible de menor orden, se genera un nuevo ID
     return maxId + 1;
 }
 
-// Endpoint for the root URL
+
+
 router.get('/', (req, res) => {
     try {
         const data = fs.readFileSync(productsFilePath, 'utf-8');
@@ -40,9 +58,8 @@ router.get('/', (req, res) => {
 
 module.exports = (io) => {
     io.on('connection', (socket) => {
-        // console.log('A user connected');
+        // console.log('usuario conectado');
 
-        // Emitir la lista de productos al cliente cuando se conecta
         try {
             const data = fs.readFileSync(productsFilePath, 'utf-8');
             const products = JSON.parse(data);
@@ -53,9 +70,21 @@ module.exports = (io) => {
 
         // Manejar la eliminación de un producto
         socket.on('deleteProduct', (productId) => {
-            // Lógica para eliminar el producto de la base de datos o el archivo JSON
-            // Después de eliminar el producto, emitir un evento 'productDeleted' con el ID del producto eliminado a todos los clientes
-            io.emit('productDeleted', productId);
+            try {
+                const data = fs.readFileSync(productsFilePath, 'utf-8');
+                let products = JSON.parse(data);
+
+                // Filtrar el producto a eliminar
+                products = products.filter(product => product.id !== productId);
+
+                // Escribir la lista actualizada
+                fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2), 'utf-8');
+
+                // Respuesta producto eliminado
+                io.emit('productDeleted', productId);
+            } catch (error) {
+                console.error("error borrando productos:", error);
+            }
         });
 
         // Manejar la creación de un nuevo producto
@@ -93,7 +122,7 @@ module.exports = (io) => {
         });
 
         socket.on('disconnect', () => {
-            // console.log('A user disconnected');
+            // console.log('usuario desconectado');
         });
     });
     return router;

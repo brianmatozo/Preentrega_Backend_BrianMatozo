@@ -34,6 +34,22 @@ app.use('/api/carts', cartsRouter);
 const viewsRouter = require('./src/router/viewsRouter')(io);
 app.use('/', viewsRouter);
 
+io.on('connection', (socket) => {
+    // console.log('usuario conectado');
+    fs.readFile(productsFilePath, 'utf-8', (err, data) => {
+        if (err) {
+            console.error("error de lectura:", err);
+            return;
+        }
+        const products = JSON.parse(data);
+        socket.emit('products', products);
+    });
+
+    socket.on('disconnect', () => {
+        // console.log('usuario desconectado');
+    });
+});
+
 // server
 server.listen(PORT, () => {
     console.log(`server en http://localhost:${PORT}`);
