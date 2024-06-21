@@ -19,7 +19,7 @@ const cartSchema = new Schema({
     ]
 });
 
-productSchema.plugin(mongoosePaginate);
+cartSchema.plugin(mongoosePaginate);
 
 const CartModel = model(cartCollectionName, cartSchema)
 

@@ -5,6 +5,7 @@ const fs = require('fs');
 const exphbs = require('express-handlebars'); 
 const path = require('path');
 const socketIo = require('socket.io');
+const { Server } = require('socket.io')
 const productsRouter = require('./src/router/productsRouter');
 const cartsRouter = require('./src/router/cartsRouter');
 const productsController = require("./src/controllers/products.controllers");
@@ -14,7 +15,7 @@ require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = new Server(server);
 
 const PORT = process.env.PORT || 8080
 const MONGODB_URL = process.env.MONGODB_URL;
@@ -62,12 +63,15 @@ app.set('views', path.join(__dirname, 'views'));
 
 //public setup
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.use((req, res, next)=>{
+    req.io = io;
+    next();
+})
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // routers
-app.use('/api/products', productsRouter);
+app.use('/api/products', productsRouter(io));
 app.use('/api/carts', cartsRouter);
 app.use('/', viewsRouter);
 

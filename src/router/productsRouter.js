@@ -7,21 +7,21 @@ const controllers = require("../controllers/products.controllers")
 
 module.exports = (io) => {
 
-// Listar todos los productos
-router.get('/', controllers.getAll)
+    // Listar todos los productos
+    router.get('/', controllers.getAll)
 
-// Traer un producto por su id
-router.get('/:pid', controllers.getById)
+    // Traer un producto por su id
+    router.get('/:pid', controllers.getById)
 
-// Agregar un nuevo producto
-router.post('/', controllers.createProduct)
+    // Agregar un nuevo producto
+    router.post('/', (req, res)=> controllers.createProduct(req, res, io))
 
-// Actualizar un producto por su id
-router.put('/:pid', controllers.modifyProduct)
+    // Actualizar un producto por su id
+    router.put('/:pid', controllers.modifyProduct)
 
-// Eliminar un producto por su id
-router.delete('/:pid', controllers.deleteProduct)
+    // Eliminar un producto por su id
+    router.delete('/:pid', (req, res)=> controllers.deleteProduct(req, res, io))
 
-return router;
+    return router;
 };
 

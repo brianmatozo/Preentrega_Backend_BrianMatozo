@@ -7,6 +7,10 @@ const io = require('socket.io')
 const path = require('path')
 const productsFilePath = path.join(__dirname, "../data/products.json")
 const cartsFilePath = path.join(__dirname, "../data/carts.json")
+const { CartModel } = require("../daos/mongodb/models/carts.model")
+const { ProductModel } = require('../daos/mongodb/models/product.model');
+const { ObjectId } = require('mongoose').Types;
+const { json } = require('body-parser');
 
 function generateCartId(carts) {
     if (carts.length === 0) {
@@ -39,91 +43,106 @@ function getAllCarts() {
 function saveCart(carts) {
     fs.writeFileSync(cartsFilePath, JSON.stringify(products, null, 2), 'utf-8');
 }
+//     try {
+//         const carts = getAllCarts();
+//         const newCartId = generateCartId(carts);
+//         const newCart = {
+//             id: newCartId,
+//             products: [] // vacio por defecto
+//         };
+//         carts.push(newCart);
+//         saveCart(newCart);
+//         res.status(201).json(newCart);
+//     } catch (error) {
+//         console.error("Error al crear un nuevo carrito:", error);
+//         res.status(500).json({ error: "Error interno del servidor al crear un nuevo carrito." });
+//     }
+//   };
 
 const createCart = async (req, res) => {
     try {
-        const carts = getAllCarts();
-        const newCartId = generateCartId(carts);
-        const newCart = {
-            id: newCartId,
-            products: [] // vacio por defecto
-        };
-        carts.push(newCart);
-        saveCart(newCart);
+        const newCart = new CartModel({ products: [] });
+        await newCart.save();
         res.status(201).json(newCart);
     } catch (error) {
         console.error("Error al crear un nuevo carrito:", error);
         res.status(500).json({ error: "Error interno del servidor al crear un nuevo carrito." });
     }
-  };
+};
 
 const getById = async (req, res) => {
     try {
-        const cartId = parseInt(req.params.cid);
-        const carts = getAllCarts();
-        const cart = carts.find(cart => cart.id === cartId);
-        // exixte?
-        if (cart) {
-            // respuesta
-            res.json(cart.products);
-        } else {
-            res.status(404).json({ error: "Carrito no encontrado" });
+        const cartId = req.params.cid;
+
+        if (!ObjectId.isValid(cartId)) {
+            return res.status(404).json({ error: "Carrito no encontrado" });
         }
+
+        const cart = await CartModel.findById(cartId);
+        
+        if (!cart) {
+            return res.status(404).json({ error: "Carrito no encontrado" });
+        }
+
+        res.json(cart.products);
     } catch (error) {
         console.error("Error al listar productos del carrito:", error);
         res.status(500).json({ error: "Error interno del servidor al listar productos del carrito" });
     }
 }
 
-const addProductById = async (req, res) =>{
+const addProductById = async (req, res) => {
     try {
-        const cartId = parseInt(req.params.cid);
-        const productId = parseInt(req.params.pid);
-        let carts = getAllCarts();
-        const cartIndex = carts.findIndex(cart => cart.id === cartId);
-        if (cartIndex !== -1) {
-            const cart = carts[cartIndex];
-            const productIndex = cart.products.findIndex(product => product.id === productId);
-            if (productIndex !== -1) {
-                // exstente, incrementar cantidad
-                cart.products[productIndex].quantity++;
-            } else {
-                // inexistente, nuevo contador
-                cart.products.push({ id: productId, quantity: 1 });
-            }
-            saveCart(cart)
-            res.json(cart);
-        } else {
-            res.status(404).json({ error: "Carrito no encontrado" });
+        const cartId = req.params.cid;
+        const productId = req.params.pid;
+
+        // Verificar si el producto existe
+        const product = await ProductModel.findById(productId);
+        if (!product) {
+            return res.status(404).json({ error: "Producto no encontrado" });
         }
+
+        // Buscar el carrito y agregar el producto
+        const cart = await CartModel.findById(cartId);
+        if (!cart) {
+            return res.status(404).json({ error: "Carrito no encontrado" });
+        }
+
+        // Verificar si el producto ya está en el carrito
+        const productIndex = cart.products.findIndex(p => p._id.toString() === productId);
+        if (productIndex !== -1) {
+            // Si el producto ya está en el carrito, incrementar la cantidad
+            cart.products[productIndex].quantity++;
+        } else {
+            // Si el producto no está en el carrito, agregarlo con cantidad 1
+            cart.products.push({ _id: product._id, quantity: 1 });
+        }
+
+        await cart.save();
+        res.json(cart);
     } catch (error) {
         console.error("Error al agregar un producto al carrito:", error);
         res.status(500).json({ error: "Error interno del servidor al agregar un producto al carrito" });
     }
-}
+};
 
 const deleteById = async (req, res) => {
     try {
-        const cartId = parseInt(req.params.cid);
-        let carts = getAllCarts();
-        const index = carts.findIndex(cart => cart.id === cartId);
-        if (index !== -1) {
-            // eliminar
-            carts.splice(index, 1);
-            saveCart(carts)
-            res.json({ message: "Carrito eliminado exitosamente" });
-        } else {
-            res.status(404).json({ error: "Carrito no encontrado" });
+        const cartId = req.params.cid;
+        const deletedCart = await CartModel.findByIdAndDelete(cartId);
+        if (!deletedCart) {
+            return res.status(404).json({ error: "Carrito no encontrado" });
         }
+        res.json({ message: "Carrito eliminado exitosamente" });
     } catch (error) {
         console.error("Error al eliminar el carrito:", error);
-        res.status(500).json({ error: "Error al eliminar el carrito" });
+        res.status(500).json({ error: "Error interno del servidor al eliminar el carrito" });
     }
-}
+};
 
 const getAll = async (req, res) => {
     try {
-        const carts = getAllCarts();
+        const carts = await CartModel.find()
         res.json(carts);
     } catch (error) {
         console.error("Error al leer los carritos:", error);

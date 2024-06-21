@@ -4,8 +4,11 @@ const router = express.Router();
 const fs = require('fs')
 const socketIo = require('socket.io')
 const io = require('socket.io')
-const path = require('path')
+const path = require('path');
+const { ProductModel } = require('../daos/mongodb/models/product.model');
+const { CartModel } = require("../daos/mongodb/models/carts.model")
 const productsFilePath = path.join(__dirname, "../data/products.json")
+const mongoosePaginate = require('mongoose-paginate-v2')
 
 function generateProductId(products) {
     if (products.length === 0) {
@@ -30,21 +33,41 @@ function saveProducts(products) {
     fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2), 'utf-8');
 }
 
-const getAll = async (req, res) =>{
+const getAll = async (req, res) => {
     try {
-        const products = getAllProducts();
-        res.json(products);
+        const { page = 1, limit = 10, sort, query } = req.query; // Asegúrate de recibir `query` correctamente
+
+        const options = {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            sort: sort ? { price: sort === 'asc' ? 1 : -1 } : undefined
+        };
+
+        const filter = query ? { $or: [{ category: query }, { status: query }] } : {};
+
+        const result = await ProductModel.paginate(filter, options);
+        res.json({
+            status: 'success',
+            payload: result.docs,
+            totalPages: result.totalPages,
+            prevPage: result.hasPrevPage ? result.prevPage : null,
+            nextPage: result.hasNextPage ? result.nextPage : null,
+            page: result.page,
+            hasPrevPage: result.hasPrevPage,
+            hasNextPage: result.hasNextPage,
+            prevLink: result.hasPrevPage ? `/products?limit=${limit}&page=${result.prevPage}&sort=${sort}&query=${query}` : null,
+            nextLink: result.hasNextPage ? `/products?limit=${limit}&page=${result.nextPage}&sort=${sort}&query=${query}` : null
+        });
     } catch (error) {
         console.error("Error al leer productos:", error);
         res.status(500).json({ error: "Error al leer productos" });
     }
-}
+};
 
 const getById = async (req, res)=>{
     try {
         const productId = req.params.pid;
-        const products = getAllProducts();
-        const product = products.find(p => p.id === parseInt(productId));
+        const product = await ProductModel.findById(productId)
         if (product) {
             res.json(product);
         } else {
@@ -56,84 +79,66 @@ const getById = async (req, res)=>{
     }
 }
 
-const createProduct = async (req, res)=>{
+const createProduct = async (req, res, io)=>{
     try {
         const { title, description, code, price, stock, category, thumbnails } = req.body;
         if (!title || !description || !code || !price || !stock || !category) {
             return res.status(400).json({ error: "Todos los campos son obligatorios excepto thumbnails" });
         }
-        const products = getAllProducts();
-        const newProductId = generateProductId(products);
-        const status = true;
-        const thumbnailsArray = thumbnails || []; // thumbnails es un array opcional
         
-        const newProduct = {
-            id: newProductId,
+        const newProduct = new ProductModel({
             title,
             description,
             code,
             price,
-            status,
+            status: true,
             stock,
             category,
-            thumbnails: thumbnailsArray
-        };
-
-        products.push(newProduct);
-        saveProducts(products)
+            thumbnails: thumbnails || []
+        });
+        await newProduct.save();
         io.emit('productCreated', newProduct);
         // repuesta nuevo producto
         res.status(201).json(newProduct);
     } catch (error) {
-        // error 500 cliente
         console.error("Error al agregar nuevo producto:", error);
         res.status(500).json({ error: "Error al agregar nuevo producto" });
     }
 }
 
-const modifyProduct = async (req, res)=>{
+const modifyProduct = async (req, res) => {
     try {
-        const productId = parseInt(req.params.pid);
+        const productId = req.params.pid;
         const { title, description, code, price, stock, category, thumbnails } = req.body;
-        let products = getAllProducts();
-        const index = products.findIndex(product => product.id === productId);
 
-        if (index !== -1) {
-            // actualizar producto
-            products[index] = {
-                ...products[index],
-                title,
-                description,
-                code,
-                price,
-                stock,
-                category,
-                thumbnails
-            };
+        const updatedProduct = await ProductModel.findByIdAndUpdate(productId, {
+            title,
+            description,
+            code,
+            price,
+            stock,
+            category,
+            thumbnails
+        }, { new: true });
 
-            saveProducts(products)
-            res.json(products[index]);
+        if (updatedProduct) {
+            res.json(updatedProduct);
         } else {
-            // error no existe
             res.status(404).json({ error: "Producto no encontrado" });
         }
     } catch (error) {
-        // error 500 server
         console.error("Error al actualizar el producto:", error);
         res.status(500).json({ error: "Error al actualizar el producto" });
     }
-}
+};
 
-const deleteProduct = async (req, res)=>{
+const deleteProduct = async (req, res, io) => {
     try {
-        const productId = parseInt(req.params.pid);
-        let products = getAllProducts();
-        const index = products.findIndex(product => product.id === productId);
-        if (index !== -1) {
-            // eliminar
-            products.splice(index, 1);
-            saveProducts(products);
-            io.emit('productDeleted', productId);
+        const productId = req.params.pid;
+        const deletedProduct = await ProductModel.findByIdAndDelete(productId);
+
+        if (deletedProduct) {
+            io.emit('productDeleted', productId); // Emite el evento a través de Socket.IO
             res.json({ message: "Producto eliminado exitosamente" });
         } else {
             res.status(404).json({ error: "Producto no encontrado" });
@@ -142,7 +147,7 @@ const deleteProduct = async (req, res)=>{
         console.error("Error al eliminar el producto:", error);
         res.status(500).json({ error: "Error al eliminar el producto" });
     }
-}
+};
 
 const renderHome = async (req, res)=>{
     try{
