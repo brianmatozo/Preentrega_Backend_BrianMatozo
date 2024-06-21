@@ -12,37 +12,37 @@ const { ProductModel } = require('../daos/mongodb/models/product.model');
 const { ObjectId } = require('mongoose').Types;
 const { json } = require('body-parser');
 
-function generateCartId(carts) {
-    if (carts.length === 0) {
-        return 1;
-    }
-    const maxId = carts.reduce((max, cart) => (cart.id > max ? cart.id : max), 0);
-    for (let i = 1; i <= maxId; i++) {
-        const idExists = carts.some(cart => cart.id === i);
-        if (!idExists) {
-            return i;
-        }
-    }
-    return maxId + 1;
-}
+// function generateCartId(carts) {
+//     if (carts.length === 0) {
+//         return 1;
+//     }
+//     const maxId = carts.reduce((max, cart) => (cart.id > max ? cart.id : max), 0);
+//     for (let i = 1; i <= maxId; i++) {
+//         const idExists = carts.some(cart => cart.id === i);
+//         if (!idExists) {
+//             return i;
+//         }
+//     }
+//     return maxId + 1;
+// }
 
-function getAllProducts() {
-    const data = fs.readFileSync(productsFilePath, 'utf-8');
-    return JSON.parse(data);
-}
+// function getAllProducts() {
+//     const data = fs.readFileSync(productsFilePath, 'utf-8');
+//     return JSON.parse(data);
+// }
 
-function saveProducts(products) {
-    fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2), 'utf-8');
-}
+// function saveProducts(products) {
+//     fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2), 'utf-8');
+// }
 
-function getAllCarts() {
-    const data = fs.readFileSync(cartsFilePath, 'utf-8');
-    return JSON.parse(data);
-}
+// function getAllCarts() {
+//     const data = fs.readFileSync(cartsFilePath, 'utf-8');
+//     return JSON.parse(data);
+// }
 
-function saveCart(carts) {
-    fs.writeFileSync(cartsFilePath, JSON.stringify(products, null, 2), 'utf-8');
-}
+// function saveCart(carts) {
+//     fs.writeFileSync(cartsFilePath, JSON.stringify(products, null, 2), 'utf-8');
+// }
 //     try {
 //         const carts = getAllCarts();
 //         const newCartId = generateCartId(carts);
@@ -78,13 +78,14 @@ const getById = async (req, res) => {
             return res.status(404).json({ error: "Carrito no encontrado" });
         }
 
-        const cart = await CartModel.findById(cartId);
+        const cart = await CartModel.findById(cartId).populate('products._id');
         
         if (!cart) {
             return res.status(404).json({ error: "Carrito no encontrado" });
         }
 
         res.json(cart.products);
+        res.render('carts', { cartId, products: cart.products});
     } catch (error) {
         console.error("Error al listar productos del carrito:", error);
         res.status(500).json({ error: "Error interno del servidor al listar productos del carrito" });
@@ -126,6 +127,89 @@ const addProductById = async (req, res) => {
     }
 };
 
+const updateCartProducts = async (req, res) => {
+    try {
+        const cartId = req.params.cid;
+        const { products } = req.body;
+
+        // Buscar el carrito y actualizar los productos
+        const cart = await CartModel.findById(cartId);
+        if (!cart) {
+            return res.status(404).json({ error: "Carrito no encontrado" });
+        }
+
+        cart.products = products; // Reemplazar los productos del carrito con los nuevos
+
+        await cart.save();
+        res.json(cart);
+    } catch (error) {
+        console.error("Error al actualizar los productos del carrito:", error);
+        res.status(500).json({ error: "Error interno del servidor al actualizar los productos del carrito" });
+    }
+}
+
+const updateProductQuantity = async (req, res) => {
+    try {
+        const cartId = req.params.cid;
+        const productId = req.params.pid;
+        const { quantity } = req.body;
+
+        // Buscar el carrito y actualizar la cantidad del producto
+        const cart = await CartModel.findById(cartId);
+        if (!cart) {
+            return res.status(404).json({ error: "Carrito no encontrado" });
+        }
+
+        // Verificar si el producto está en el carrito
+        const productIndex = cart.products.findIndex(p => p._id.toString() === productId);
+        if (productIndex === -1) {
+            return res.status(404).json({ error: "Producto no encontrado en el carrito" });
+        }
+
+        // Actualizar la cantidad del producto
+        cart.products[productIndex].quantity = quantity;
+
+        await cart.save();
+        res.json(cart);
+    } catch (error) {
+        console.error("Error al actualizar la cantidad del producto en el carrito:", error);
+        res.status(500).json({ error: "Error interno del servidor al actualizar la cantidad del producto en el carrito" });
+    }
+};
+
+const deleteProductFromCart = async (req, res) => {
+    try {
+        const cartId = req.params.cid;
+        const productId = req.params.pid;
+        const cart = await CartModel.findById(cartId);
+        if (!cart) {
+            return res.status(404).json({ error: "Carrito no encontrado" });
+        }
+        cart.products = cart.products.filter(p => p._id.toString() !== productId);
+        await cart.save();
+        res.json(cart);
+    } catch (error) {
+        console.error("Error al eliminar un producto del carrito:", error);
+        res.status(500).json({ error: "Error interno del servidor al eliminar un producto del carrito" });
+    }
+};
+
+const deleteAllProductsFromCart = async (req, res) => {
+    try {
+        const cartId = req.params.cid;
+        const cart = await CartModel.findById(cartId);
+        if (!cart) {
+            return res.status(404).json({ error: "Carrito no encontrado" });
+        }
+        cart.products = [];
+        await cart.save();
+        res.json(cart);
+    } catch (error) {
+        console.error("Error al eliminar todos los productos del carrito:", error);
+        res.status(500).json({ error: "Error interno del servidor al eliminar todos los productos del carrito" });
+    }
+};
+
 const deleteById = async (req, res) => {
     try {
         const cartId = req.params.cid;
@@ -142,7 +226,7 @@ const deleteById = async (req, res) => {
 
 const getAll = async (req, res) => {
     try {
-        const carts = await CartModel.find()
+        const carts = await CartModel.find().populate('product._id')
         res.json(carts);
     } catch (error) {
         console.error("Error al leer los carritos:", error);
@@ -155,5 +239,9 @@ module.exports = {
     getById,
     addProductById,
     deleteById,
-    getAll
+    getAll,
+    updateCartProducts,
+    updateProductQuantity,
+    deleteProductFromCart,
+    deleteAllProductsFromCart
 }

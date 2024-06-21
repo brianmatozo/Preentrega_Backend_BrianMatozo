@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
             <div class="card-body">
                 <h5 class="card-title">${product.title}</h5>
                 <p class="card-text">${product.description}</p>
-                <p class="product-id">${product.id}</p>
+                <p class="product-id">${product._id}</p>
                 <p class="card-text"><strong>Price:</strong> $${product.price}</p>
                 <p class="card-text"><strong>Category:</strong> ${product.category}</p>
                 <a href="#" class="btn btn-primary">Go somewhere</a>
@@ -45,12 +45,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
         renderProduct(product);
     });
 
-    // eliminar productos
     const deleteProductForm = document.getElementById('delete-product-form');
     deleteProductForm.addEventListener('submit', (event) => {
         event.preventDefault();
         const formData = new FormData(deleteProductForm);
-        const productId = parseInt(formData.get('productId'), 10);
+        const productId = formData.get('productId').trim();  // Convertir a cadena
         socket.emit('deleteProduct', productId);
     });
 

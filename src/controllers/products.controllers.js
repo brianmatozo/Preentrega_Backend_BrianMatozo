@@ -1,37 +1,37 @@
-const http = require('http')
-const express = require("express")
+const http = require('http');
+const express = require("express");
 const router = express.Router();
-const fs = require('fs')
-const socketIo = require('socket.io')
-const io = require('socket.io')
+const fs = require('fs');
+const socketIo = require('socket.io');
+const io = require('socket.io');
 const path = require('path');
 const { ProductModel } = require('../daos/mongodb/models/product.model');
-const { CartModel } = require("../daos/mongodb/models/carts.model")
-const productsFilePath = path.join(__dirname, "../data/products.json")
-const mongoosePaginate = require('mongoose-paginate-v2')
+const { CartModel } = require("../daos/mongodb/models/carts.model");
+const productsFilePath = path.join(__dirname, "../data/products.json");
+const mongoosePaginate = require('mongoose-paginate-v2');
 
-function generateProductId(products) {
-    if (products.length === 0) {
-        return 1;
-    }
-    const maxId = products.reduce((max, product) => (product.id > max ? product.id : max), 0);
-    for (let i = 1; i <= maxId; i++) {
-        const idExists = products.some(product => product.id === i);
-        if (!idExists) {
-            return i;
-        }
-    }
-    return maxId + 1;
-}
+// function generateProductId(products) {
+//     if (products.length === 0) {
+//         return 1;
+//     }
+//     const maxId = products.reduce((max, product) => (product.id > max ? product.id : max), 0);
+//     for (let i = 1; i <= maxId; i++) {
+//         const idExists = products.some(product => product.id === i);
+//         if (!idExists) {
+//             return i;
+//         }
+//     }
+//     return maxId + 1;
+// }
 
-function getAllProducts() {
-    const data = fs.readFileSync(productsFilePath, 'utf-8');
-    return JSON.parse(data);
-}
+// function getAllProducts() {
+//     const data = fs.readFileSync(productsFilePath, 'utf-8');
+//     return JSON.parse(data);
+// }
 
-function saveProducts(products) {
-    fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2), 'utf-8');
-}
+// function saveProducts(products) {
+//     fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2), 'utf-8');
+// }
 
 const getAll = async (req, res) => {
     try {
@@ -43,7 +43,15 @@ const getAll = async (req, res) => {
             sort: sort ? { price: sort === 'asc' ? 1 : -1 } : undefined
         };
 
-        const filter = query ? { $or: [{ category: query }, { status: query }] } : {};
+        // const filter = query ? { $or: [{ category: query }, { status: query }] } : {};
+        let filter = {};
+        if (query !== undefined) {
+            if (query === 'true' || query === 'false') {
+                filter = { status: query === 'true' };
+            } else {
+                filter = { category: query };
+            }
+        }
 
         const result = await ProductModel.paginate(filter, options);
         res.json({
@@ -151,8 +159,8 @@ const deleteProduct = async (req, res, io) => {
 
 const renderHome = async (req, res)=>{
     try{
-        const products = getAllProducts();
-        res.render('home', { title: 'Home', products });
+        const products = await ProductModel.find();
+        res.render('home', { title: 'Home', body:'home', products });
     }catch (error) {
         console.error("error al leer el archivo json:", error);
         res.status(500).send("error de carga de servidor");
@@ -160,56 +168,32 @@ const renderHome = async (req, res)=>{
 }
 
 const handleSocketConnection = (io) => {
-        io.on('connection', (socket) => {
+        io.on('connection', async (socket) => {
             try {
-                const products = getAllProducts();
+                const products = await ProductModel.find();
                 socket.emit('products', products);
             } catch (error) {
                 console.error("error al leer el archivo json:", error);
             }
 
-            // Manejar la eliminación de un producto
-            socket.on('deleteProduct', (productId) => {
+            socket.on('deleteProduct', async (productId) => {
                 try {
-                    let products = getAllProducts();
-
-                    // Filtrar el producto a eliminar
-                    products = products.filter(product => product.id !== productId);
-
-                    // Escribir la lista actualizada
-                    saveProducts(products)
-
-                    // Respuesta producto eliminado
-                    io.emit('productDeleted', productId);
+                    const result = await ProductModel.findByIdAndDelete(productId);
+                    if (result) {
+                        io.emit('productDeleted', productId);
+                    }
                 } catch (error) {
-                    console.error("error borrando productos:", error);
+                    console.error("Error al borrar el producto:", error);
                 }
             });
 
-            // Manejar la creación de un nuevo producto
-            socket.on('createProduct', (newProduct) => {
+            socket.on('createProduct', async (newProduct) => {
                 try {
-                    const { title, description, code, price, stock, category, thumbnails } = newProduct;
-                    const products = getAllProducts();
-                    const newProductId = generateProductId(products);
-                    const status = true;
-                    const thumbnailsArray = thumbnails || [];
-                    const productToAdd = {
-                        id: newProductId,
-                        title,
-                        description,
-                        code,
-                        price,
-                        status,
-                        stock,
-                        category,
-                        thumbnails: thumbnailsArray
-                    };
-                    products.push(productToAdd);
-                    saveProducts(products);
-                    io.emit('productCreated', productToAdd);
+                    const productToAdd = new ProductModel(newProduct);
+                    const savedProduct = await productToAdd.save();
+                    io.emit('productCreated', savedProduct);
                 } catch (error) {
-                    console.error("error al manejar el evento createProduct:", error);
+                    console.error("Error al crear el producto:", error);
                 }
             });
 

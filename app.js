@@ -53,11 +53,17 @@ app.post('/test-create-product', async (req, res) => {
 });
 
 // handlebars setup
-app.engine('handlebars', exphbs({ 
+const hbs = exphbs.create({
+    extname: '.handlebars',
     defaultLayout: 'main',
     layoutsDir: path.join(__dirname, 'views/layouts'),
-    partialsDir: path.join(__dirname, 'views', 'partials')
-}));
+    partialsDir: path.join(__dirname, 'views', 'partials'),
+    runtimeOptions:{
+        allowProtoPropertiesByDefault: true,
+        allowProtoMethodsByDefault: true
+    }
+});
+app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'views'));
 
