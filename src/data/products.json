@@ -115,5 +115,16 @@
     "stock": "321",
     "category": "pan",
     "thumbnails": []
+  },
+  {
+    "id": 10,
+    "title": "pan",
+    "description": "megustaelpan",
+    "code": "123",
+    "price": "2222",
+    "status": true,
+    "stock": "321",
+    "category": "pan",
+    "thumbnails": []
   }
 ]

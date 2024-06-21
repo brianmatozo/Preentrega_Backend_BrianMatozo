@@ -45,10 +45,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
         renderProduct(product);
     });
 
-
-    
-
-
     // eliminar productos
     const deleteProductForm = document.getElementById('delete-product-form');
     deleteProductForm.addEventListener('submit', (event) => {
