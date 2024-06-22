@@ -45,5 +45,4 @@ router.delete("/:cid/product/:pid", controller.deleteProductFromCart);
 // eliminar del carrito todos los productos.
 router.delete("/:cid/product", controller.deleteAllProductsFromCart);
 
-
 module.exports = router;
