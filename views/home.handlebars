@@ -67,7 +67,7 @@
 </div>
 
 
-<div class="container mt-5 d-flex flex-wrap justify-content-center">
+<div class="container mt-5 d-flex flex-wrap justify-content-center productContainer">
     {{#each products}}
     <div class="card m-2 product-card" style="width: 18rem;" data-id="{{this.id}}">
         <img src="{{this.thumbnails.[0]}}" class="card-img-top" alt="{{this.title}}">
@@ -78,21 +78,10 @@
             <p class="card-text"><strong>Price:</strong> ${{this.price}}</p>
             <p class="card-text"><strong>Category:</strong> {{this.category}}</p>
             <a href="/api/products/{{this.id}}" class="btn btn-primary">Ver detalles</a>
-            <form action="/api/carts/{{cartId}}/product/{{this.id}}" method="POST">
+            <form action="/api/carts/{{../cartId}}/product/{{this.id}}" method="POST">
                 <button type="submit" class="btn btn-success">Agregar al carrito</button>
             </form>
         </div>
     </div>
     {{/each}}
 </div>
-
-
-<h1>Productos en el carrito {{cartId}}</h1>
-
-{{#each products}}
-<div class="cart-product">
-    <h2>{{title}}</h2>
-    <p><strong>Cantidad:</strong> {{this.quantity}}</p>
-    <!-- Aquí puedes agregar más detalles del producto si los necesitas -->
-</div>
-{{/each}}

@@ -157,15 +157,17 @@ const deleteProduct = async (req, res, io) => {
     }
 };
 
-const renderHome = async (req, res)=>{
-    try{
+const renderHome = async (req, res) => {
+    try {
         const products = await ProductModel.find();
-        res.render('home', { title: 'Home', body:'home', products });
-    }catch (error) {
-        console.error("error al leer el archivo json:", error);
-        res.status(500).send("error de carga de servidor");
+        const cartId = req.user ? req.user.cartId : null; // Ajusta esto según tu lógica
+        res.render('home', { title: 'Home', body: 'home', products, cartId });
+    } catch (error) {
+        console.error("Error al leer el archivo json:", error);
+        res.status(500).send("Error de carga de servidor");
     }
-}
+};
+
 
 const handleSocketConnection = (io) => {
         io.on('connection', async (socket) => {
@@ -196,7 +198,7 @@ const handleSocketConnection = (io) => {
                     console.error("Error al crear el producto:", error);
                 }
             });
-
+            
             socket.on('disconnect', () => {
                 // console.log('usuario desconectado');
             });

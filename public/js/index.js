@@ -19,14 +19,14 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
 
     function renderProduct(product) {
-        const productList = document.querySelector('.container.d-flex');
+        const productList = document.querySelector('.productContainer');
         const productCard = document.createElement('div');
         productCard.classList.add('card', 'm-2', 'product-card');
         productCard.style.width = '18rem';
         productCard.setAttribute('data-id', product.id);
-
+    
         const productImg = product.thumbnails[0] ? product.thumbnails[0] : 'default-image.jpg';
-
+    
         productCard.innerHTML = `
             <img src="${productImg}" class="card-img-top" alt="${product.title}">
             <div class="card-body">
@@ -35,12 +35,15 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 <p class="product-id">${product._id}</p>
                 <p class="card-text"><strong>Price:</strong> $${product.price}</p>
                 <p class="card-text"><strong>Category:</strong> ${product.category}</p>
-                <a href="#" class="btn btn-primary">Go somewhere</a>
+                <a href="/api/products/{{this.id}}" class="btn btn-primary">Ver detalles</a>
+                <form action="/api/carts/{{../cartId}}/product/{{this.id}}" method="POST">
+                    <button type="submit" class="btn btn-success">Agregar al carrito</button>
+                </form> 
             </div>
         `;
         productList.appendChild(productCard);
     }
-
+    
     socket.on('productCreated', (product) => {
         renderProduct(product);
     });
@@ -54,11 +57,20 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
 
     function removeProduct(productId) {
-        const productList = document.querySelector('.container.d-flex');
-        const productCard = productList.querySelector(`.product-card[data-id="${productId}"]`);
-        if (productCard) {
-            productCard.innerHTML = '';
-            productList.removeChild(productCard);
+        // Remover de la lista de productos en home.handlebars
+        const productListHome = document.querySelector('.productContainer');
+        const productCardHome = productListHome.querySelector(`.product-card[data-id="${productId}"]`);
+        if (productCardHome) {
+            productCardHome.innerHTML = '';
+            productListHome.removeChild(productCardHome);
+        }
+
+        // Remover de la lista de productos en carts.handlebars
+        const productListCart = document.querySelector('.cartContainer');
+        const productCardCart = productListCart.querySelector(`.product-card[data-id="${productId}"]`);
+        if (productCardCart) {
+            productCardCart.innerHTML = '';
+            productListCart.removeChild(productCardCart);
         }
     }
 

@@ -70,6 +70,28 @@ const createCart = async (req, res) => {
     }
 };
 
+// const getById = async (req, res) => {
+//     try {
+//         const cartId = req.params.cid;
+
+//         if (!ObjectId.isValid(cartId)) {
+//             return res.status(404).json({ error: "Carrito no encontrado" });
+//         }
+
+//         const cart = await CartModel.findById(cartId).populate('products._id');
+        
+//         if (!cart) {
+//             return res.status(404).json({ error: "Carrito no encontrado" });
+//         }
+
+//         res.json(cart.products);
+//         res.render('carts', { cartId, products: cart.products});
+//     } catch (error) {
+//         console.error("Error al listar productos del carrito:", error);
+//         res.status(500).json({ error: "Error interno del servidor al listar productos del carrito" });
+//     }
+// }
+
 const getById = async (req, res) => {
     try {
         const cartId = req.params.cid;
@@ -84,13 +106,13 @@ const getById = async (req, res) => {
             return res.status(404).json({ error: "Carrito no encontrado" });
         }
 
-        res.json(cart.products);
-        res.render('carts', { cartId, products: cart.products});
+        res.render('carts', { cartId, products: cart.products });
     } catch (error) {
         console.error("Error al listar productos del carrito:", error);
         res.status(500).json({ error: "Error interno del servidor al listar productos del carrito" });
     }
-}
+};
+
 
 const addProductById = async (req, res) => {
     try {
