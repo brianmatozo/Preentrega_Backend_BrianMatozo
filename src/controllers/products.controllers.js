@@ -10,29 +10,6 @@ const { CartModel } = require("../daos/mongodb/models/carts.model")
 const productsFilePath = path.join(__dirname, "../data/products.json")
 const mongoosePaginate = require('mongoose-paginate-v2')
 
-function generateProductId(products) {
-    if (products.length === 0) {
-        return 1;
-    }
-    const maxId = products.reduce((max, product) => (product.id > max ? product.id : max), 0);
-    for (let i = 1; i <= maxId; i++) {
-        const idExists = products.some(product => product.id === i);
-        if (!idExists) {
-            return i;
-        }
-    }
-    return maxId + 1;
-}
-
-function getAllProducts() {
-    const data = fs.readFileSync(productsFilePath, 'utf-8');
-    return JSON.parse(data);
-}
-
-function saveProducts(products) {
-    fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2), 'utf-8');
-}
-
 const getAll = async (req, res) => {
     try {
         const { page = 1, limit = 10, sort, query } = req.query; // Asegúrate de recibir `query` correctamente
@@ -43,7 +20,14 @@ const getAll = async (req, res) => {
             sort: sort ? { price: sort === 'asc' ? 1 : -1 } : undefined
         };
 
-        const filter = query ? { $or: [{ category: query }, { status: query }] } : {};
+        let filter = {};
+        if (query !== undefined) {
+            if (query === 'true' || query === 'false') {
+                filter = { status: query === 'true' };
+            } else {
+                filter = { category: query };
+            }
+        }
 
         const result = await ProductModel.paginate(filter, options);
         res.json({
@@ -77,7 +61,7 @@ const getById = async (req, res)=>{
         console.error("Error al leer productos:", error);
         res.status(500).json({ error: "Error al leer productos" });
     }
-}
+};
 
 const createProduct = async (req, res, io)=>{
     try {
@@ -104,7 +88,7 @@ const createProduct = async (req, res, io)=>{
         console.error("Error al agregar nuevo producto:", error);
         res.status(500).json({ error: "Error al agregar nuevo producto" });
     }
-}
+};
 
 const modifyProduct = async (req, res) => {
     try {
@@ -149,75 +133,82 @@ const deleteProduct = async (req, res, io) => {
     }
 };
 
-const renderHome = async (req, res)=>{
-    try{
-        const products = getAllProducts();
-        res.render('home', { title: 'Home', products });
-    }catch (error) {
-        console.error("error al leer el archivo json:", error);
-        res.status(500).send("error de carga de servidor");
+const renderHome = async (req, res) => {
+    try {
+        const products = await ProductModel.find();
+
+        let cartId;
+        if (req.session) {
+            if (req.session.cartId) {
+                cartId = req.session.cartId;
+            } else {
+                // Crear un nuevo carrito si no existe en la sesión
+                const newCart = new CartModel();
+                const savedCart = await newCart.save();
+                req.session.cartId = savedCart._id;
+                cartId = savedCart._id;
+            }
+        } else {
+            throw new Error('Session is not initialized.');
+        }
+
+        let cart;
+        if (req.session) {
+            if (req.session.cartId) {
+                cart = await CartModel.findById(req.session.cartId).populate('products._id');
+            } else {
+                // Crear un nuevo carrito si no existe en la sesión
+                cart = new CartModel();
+                const savedCart = await cart.save();
+                req.session.cartId = savedCart._id;
+                cart = savedCart;
+            }
+        } else {
+            throw new Error('Session is not initialized.');
+        }
+
+        res.render('home', { title: 'Home', products, cartId, cart });
+    } catch (error) {
+        console.error("Error al renderizar la página de inicio:", error);
+        res.status(500).send("Error de carga de servidor");
     }
-}
+};
 
 const handleSocketConnection = (io) => {
-        io.on('connection', (socket) => {
+        io.on('connection', async (socket) => {
             try {
-                const products = getAllProducts();
+                const products = await ProductModel.find();
                 socket.emit('products', products);
             } catch (error) {
                 console.error("error al leer el archivo json:", error);
             }
 
-            // Manejar la eliminación de un producto
-            socket.on('deleteProduct', (productId) => {
+            socket.on('deleteProduct', async (productId) => {
                 try {
-                    let products = getAllProducts();
-
-                    // Filtrar el producto a eliminar
-                    products = products.filter(product => product.id !== productId);
-
-                    // Escribir la lista actualizada
-                    saveProducts(products)
-
-                    // Respuesta producto eliminado
-                    io.emit('productDeleted', productId);
+                    const result = await ProductModel.findByIdAndDelete(productId);
+                    if (result) {
+                        io.emit('productDeleted', productId);
+                    }
                 } catch (error) {
-                    console.error("error borrando productos:", error);
+                    console.error("Error al borrar el producto:", error);
                 }
             });
 
-            // Manejar la creación de un nuevo producto
-            socket.on('createProduct', (newProduct) => {
+            socket.on('createProduct', async (newProduct) => {
                 try {
-                    const { title, description, code, price, stock, category, thumbnails } = newProduct;
-                    const products = getAllProducts();
-                    const newProductId = generateProductId(products);
-                    const status = true;
-                    const thumbnailsArray = thumbnails || [];
-                    const productToAdd = {
-                        id: newProductId,
-                        title,
-                        description,
-                        code,
-                        price,
-                        status,
-                        stock,
-                        category,
-                        thumbnails: thumbnailsArray
-                    };
-                    products.push(productToAdd);
-                    saveProducts(products);
-                    io.emit('productCreated', productToAdd);
+                    const productToAdd = new ProductModel(newProduct);
+                    const savedProduct = await productToAdd.save();
+                    io.emit('productCreated', savedProduct);
                 } catch (error) {
-                    console.error("error al manejar el evento createProduct:", error);
+                    console.error("Error al crear el producto:", error);
                 }
             });
-
+            
             socket.on('disconnect', () => {
                 // console.log('usuario desconectado');
             });
         });
-    }
+    };
 
 
 module.exports = {
@@ -228,4 +219,4 @@ module.exports = {
     deleteProduct,
     handleSocketConnection,
     renderHome
-}
+};

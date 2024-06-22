@@ -1,0 +1,53 @@
+{{#if cart.products.length}}
+<p>Cart: {{cart._id}}</p>
+    <ul class="p-2">
+    {{#each cart.products}}
+        <li class="card">
+            <div class="card-body">
+            <h5 class="card-title text-center">{{this._id.title}}</h5>
+            <p class="card-text mt-3">Cantidad: {{this.quantity}}</p>
+            <p class="card-text">{{this._id._id}}</p>
+            <p class="card-text">{{this._id.description}}</p>
+            <h5 class="card-title"><strong>${{this._id.price}}</strong></h5>
+            {{!-- <form action="/api/carts/{{../cart._id}}/product/{{this._id._id}}/delete" method="POST">
+                <button type="submit" class="btn btn-danger">Eliminar</button>
+            </form> --}}
+            </div>
+        </li>
+    {{/each}}
+    </ul>
+    <form id="checkout-form" action="/api/carts/{{cart._id}}" method="POST">
+        <button type="button" id="checkout-btn" class="btn btn-danger">Checkout</button>
+    </form>
+{{else}}
+    <p>El carrito está vacío.</p>
+{{/if}}
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const checkoutBtn = document.getElementById('checkout-btn');
+
+        checkoutBtn.addEventListener('click', async () => {
+            const cartId = '{{cart._id}}';
+            const url = `/api/carts/${cartId}/product`;
+            const options = {
+                method: 'DELETE'
+            };
+
+            try {
+                const response = await fetch(url, options);
+
+                if (!response.ok) {
+                    throw new Error('Error al hacer checkout del carrito');
+                }
+
+                // Recargar la página después de completar la operación
+                window.location.reload();
+
+            } catch (error) {
+                console.error('Error al hacer checkout del carrito:', error);
+                // Manejar el error y mostrar un mensaje al usuario si es necesario
+            }
+        });
+    });
+</script>
