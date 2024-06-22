@@ -6,32 +6,9 @@ const socketIo = require('socket.io');
 const io = require('socket.io');
 const path = require('path');
 const { ProductModel } = require('../daos/mongodb/models/product.model');
-const { CartModel } = require("../daos/mongodb/models/carts.model");
-const productsFilePath = path.join(__dirname, "../data/products.json");
-const mongoosePaginate = require('mongoose-paginate-v2');
-
-// function generateProductId(products) {
-//     if (products.length === 0) {
-//         return 1;
-//     }
-//     const maxId = products.reduce((max, product) => (product.id > max ? product.id : max), 0);
-//     for (let i = 1; i <= maxId; i++) {
-//         const idExists = products.some(product => product.id === i);
-//         if (!idExists) {
-//             return i;
-//         }
-//     }
-//     return maxId + 1;
-// }
-
-// function getAllProducts() {
-//     const data = fs.readFileSync(productsFilePath, 'utf-8');
-//     return JSON.parse(data);
-// }
-
-// function saveProducts(products) {
-//     fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2), 'utf-8');
-// }
+const { CartModel } = require("../daos/mongodb/models/carts.model")
+const productsFilePath = path.join(__dirname, "../data/products.json")
+const mongoosePaginate = require('mongoose-paginate-v2')
 
 const getAll = async (req, res) => {
     try {
@@ -43,7 +20,6 @@ const getAll = async (req, res) => {
             sort: sort ? { price: sort === 'asc' ? 1 : -1 } : undefined
         };
 
-        // const filter = query ? { $or: [{ category: query }, { status: query }] } : {};
         let filter = {};
         if (query !== undefined) {
             if (query === 'true' || query === 'false') {
@@ -85,7 +61,7 @@ const getById = async (req, res)=>{
         console.error("Error al leer productos:", error);
         res.status(500).json({ error: "Error al leer productos" });
     }
-}
+};
 
 const createProduct = async (req, res, io)=>{
     try {
@@ -112,7 +88,7 @@ const createProduct = async (req, res, io)=>{
         console.error("Error al agregar nuevo producto:", error);
         res.status(500).json({ error: "Error al agregar nuevo producto" });
     }
-}
+};
 
 const modifyProduct = async (req, res) => {
     try {
@@ -160,14 +136,43 @@ const deleteProduct = async (req, res, io) => {
 const renderHome = async (req, res) => {
     try {
         const products = await ProductModel.find();
-        const cartId = req.user ? req.user.cartId : null; // Ajusta esto según tu lógica
-        res.render('home', { title: 'Home', body: 'home', products, cartId });
+
+        let cartId;
+        if (req.session) {
+            if (req.session.cartId) {
+                cartId = req.session.cartId;
+            } else {
+                // Crear un nuevo carrito si no existe en la sesión
+                const newCart = new CartModel();
+                const savedCart = await newCart.save();
+                req.session.cartId = savedCart._id;
+                cartId = savedCart._id;
+            }
+        } else {
+            throw new Error('Session is not initialized.');
+        }
+
+        let cart;
+        if (req.session) {
+            if (req.session.cartId) {
+                cart = await CartModel.findById(req.session.cartId).populate('products._id');
+            } else {
+                // Crear un nuevo carrito si no existe en la sesión
+                cart = new CartModel();
+                const savedCart = await cart.save();
+                req.session.cartId = savedCart._id;
+                cart = savedCart;
+            }
+        } else {
+            throw new Error('Session is not initialized.');
+        }
+
+        res.render('home', { title: 'Home', products, cartId, cart });
     } catch (error) {
-        console.error("Error al leer el archivo json:", error);
+        console.error("Error al renderizar la página de inicio:", error);
         res.status(500).send("Error de carga de servidor");
     }
 };
-
 
 const handleSocketConnection = (io) => {
         io.on('connection', async (socket) => {
@@ -203,7 +208,7 @@ const handleSocketConnection = (io) => {
                 // console.log('usuario desconectado');
             });
         });
-    }
+    };
 
 
 module.exports = {
@@ -214,4 +219,4 @@ module.exports = {
     deleteProduct,
     handleSocketConnection,
     renderHome
-}
+};

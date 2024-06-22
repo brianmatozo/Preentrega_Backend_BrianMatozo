@@ -1,17 +1,18 @@
-const http = require('http')
+const http = require('http');
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const exphbs = require('express-handlebars'); 
 const path = require('path');
 const socketIo = require('socket.io');
-const { Server } = require('socket.io')
+const { Server } = require('socket.io');
 const productsRouter = require('./src/router/productsRouter');
 const cartsRouter = require('./src/router/cartsRouter');
 const productsController = require("./src/controllers/products.controllers");
 const viewsRouter = require("./src/router/viewsRouter");
 const { default: mongoose } = require('mongoose');
 require('dotenv').config();
+const session = require('express-session');
 
 const app = express();
 const server = http.createServer(app);
@@ -28,30 +29,6 @@ mongoose.connect(MONGODB_URL)
     process.exit(1);
 });
 
-app.post('/test-create-product', async (req, res) => {
-    const { ProductModel } = require('./src/daos/mongodb/models/product.model');
-
-    try {
-        const newProduct = new ProductModel({
-            title: "pan",
-            description: "megustaelpan",
-            code: "123",
-            price: 2222,
-            status: true,
-            stock: 321,
-            category: "pan",
-            thumbnails: []
-        });
-
-        await newProduct.save();
-
-        res.status(201).json(newProduct);
-    } catch (error) {
-        console.error("Error al crear el producto:", error);
-        res.status(500).json({ error: "Error al crear el producto" });
-    }
-});
-
 // handlebars setup
 const hbs = exphbs.create({
     extname: '.handlebars',
@@ -66,6 +43,14 @@ const hbs = exphbs.create({
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'views'));
+
+// Configuración de sesiones
+app.use(session({
+    secret: 'your-secret-key', // Cambia esto por una clave secreta única
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // Pon esto en true si usas HTTPS
+}));
 
 //public setup
 app.use(express.static(path.join(__dirname, 'public')));

@@ -1,21 +1,22 @@
-<div class="container mt-5">
-    <h2>Productos en Tiempo Real</h2>
-
+<div class="container">
+<div class="row">
+    <div class="col-9">
+        <h2>Productos en Tiempo Real</h2>
     <form id="create-product-form" class="mb-4">
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div class="form-group">
                     <label for="title">Título del Producto</label>
                     <input type="text" class="form-control" name="title" placeholder="Título del Producto" required>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div class="form-group">
                     <label for="description">Descripción del Producto</label>
                     <input type="text" class="form-control" name="description" placeholder="Descripción del Producto" required>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-3">
                 <div class="form-group">
                     <label for="code">Código del Producto</label>
                     <input type="number" class="form-control" name="code" placeholder="Código del Producto" required>
@@ -27,7 +28,7 @@
                     <input type="number" class="form-control" name="price" placeholder="Precio del Producto" required>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-3">
                 <div class="form-group">
                     <label for="stock">Stock del Producto</label>
                     <input type="number" class="form-control" name="stock" placeholder="Stock del Producto" required>
@@ -46,30 +47,33 @@
                 </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Crear Producto</button>
+        <button type="submit" class="btn btn-primary mt-3">Crear Producto</button>
     </form>
 
     <ul id="product-list" class="list-group">
         <!-- esta seccion se carga del lado del cliente -->
-    </ul>   
-</div>
-
+    </ul>
+    </div>
 <!-- views/home.handlebars -->
-<div class="container mt-5">
-    <h2>Eliminar Producto</h2>
-    <form id="delete-product-form" class="mb-4">
-        <div class="form-group">
-            <label for="productId">ID del Producto a Eliminar</label>
-            <input type="text" class="form-control" name="productId" placeholder="ID del Producto" required>
-        </div>
-        <button type="submit" class="btn btn-danger">Eliminar Producto</button>
-    </form>
+    <div class="col-3">
+        <h2>Eliminar Producto</h2>
+        <form id="delete-product-form" class="mb-4">
+            <div class="form-group">
+                <label for="productId">ID del Producto a Eliminar</label>
+                <input type="text" class="form-control" name="productId" placeholder="ID del Producto" required>
+            </div>
+            <button type="submit" class="btn btn-danger">Eliminar Producto</button>
+        </form>
+    </div>
+</div>
 </div>
 
 
+
+<input type="hidden" id="cartId" value="{{cartId}}">
 <div class="container mt-5 d-flex flex-wrap justify-content-center productContainer">
     {{#each products}}
-    <div class="card m-2 product-card" style="width: 18rem;" data-id="{{this.id}}">
+    <div class="card m-2 product-card" style="width: 18rem;" data-id="{{this._id}}">
         <img src="{{this.thumbnails.[0]}}" class="card-img-top" alt="{{this.title}}">
         <div class="card-body">
             <h5 class="card-title">{{this.title}}</h5>
@@ -77,10 +81,12 @@
             <p class="product-id">{{this.id}}</p>
             <p class="card-text"><strong>Price:</strong> ${{this.price}}</p>
             <p class="card-text"><strong>Category:</strong> {{this.category}}</p>
-            <a href="/api/products/{{this.id}}" class="btn btn-primary">Ver detalles</a>
-            <form action="/api/carts/{{../cartId}}/product/{{this.id}}" method="POST">
-                <button type="submit" class="btn btn-success">Agregar al carrito</button>
-            </form>
+            <div class="btn-group">
+                <a href="/api/products/{{this._id}}" class="btn btn-primary rounded-end-2 me-2">Ver detalles</a>
+                <form id="add-to-cart-form-{{this._id}}" action="/api/carts/{{../cartId}}/product/{{this._id}}" method="POST">
+                    <button type="submit" class="btn btn-success rounded-end-2">Agregar al carrito</button>
+                </form>
+            </div>
         </div>
     </div>
     {{/each}}
